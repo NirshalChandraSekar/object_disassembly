@@ -1,2 +1,2 @@
-segment-anything-2/checkpoints/*
+segment-anything-2/*
 video-frames/*.jpeg
