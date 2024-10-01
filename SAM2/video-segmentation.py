@@ -105,8 +105,8 @@ class video_segmentation:
 if __name__ == "__main__":
     input_video_path = "/home/niru/codes/disassembly/SAM2/input_video.mp4"
     output_video_path = "/home/niru/codes/disassembly/SAM2/final_output.mp4"
-    checkpoint_path = "/home/niru/codes/disassembly/SAM2/segment-anything-2/checkpoints/sam2_hiera_small.pt"
-    config = "sam2_hiera_s.yaml"
+    checkpoint_path = "/home/niru/codes/disassembly/SAM2/segment-anything-2/checkpoints/sam2_hiera_tiny.pt"
+    config = "sam2_hiera_t.yaml"
 
     object = video_segmentation(input_video_path,
                                 output_video_path,
