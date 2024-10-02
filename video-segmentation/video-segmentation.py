@@ -56,14 +56,39 @@ class automatic_video_segmentation:
 
         return masks
     
+    def get_point_promts(self):
+        def click_event(event, x, y, flags, param):
+            if event == cv2.EVENT_LBUTTONDOWN:
+                cv2.circle(img, (x, y), 3, (0, 0, 255), -1)
+                points.append(np.array([x, y]))
+                cv2.imshow('image', img)
+        # get the input prompts from the user
+        points = []
+        img = cv2.imread("video-frames/00000.jpeg")
+        cv2.imshow('image', img)
+        cv2.setMouseCallback('image', click_event)
+        cv2.waitKey(0)
+        cv2.destroyAllWindows()
+
+        points = np.array(points)
+        return points
+
     def add_masks_to_model(self, masks):
         for i in range(len(masks)):
             _, _, _ = self.model.add_new_mask(inference_state = self.inference_state,
                                                frame_idx = 0,
                                                obj_id = i,
                                                mask = masks[i]['segmentation'])
-            
-    def track_masks_in_frames(self, masks):
+    
+    def add_points_to_model(self, points):
+        for i in range(len(points)):
+            _, _, _ = self.model.add_new_points_or_box(inference_state = self.inference_state,
+                                               frame_idx = 0,
+                                               obj_id = i,
+                                               points = [points[i]],
+                                               labels = np.array([1]))
+
+    def track_masks_in_frames(self, masks=None, points=None):
 
         self.model = build_sam2_video_predictor(self.config, self.checkpoint, device = self.device)
         print("model updated")
@@ -71,8 +96,13 @@ class automatic_video_segmentation:
         self.inference_state = self.model.init_state("video-frames")
         self.model.reset_state(self.inference_state)
 
-        self.add_masks_to_model(masks)
-        print("masks added to model")
+        if masks is not None:
+            self.add_masks_to_model(masks)
+            print("masks added to model")
+
+        if points is not None:
+            self.add_points_to_model(points)
+            print("points added to model")
 
         colors = ['#FF1493', '#00BFFF', '#FF6347', '#FFD700']
         mask_annotator = sv.MaskAnnotator(
@@ -100,17 +130,22 @@ class automatic_video_segmentation:
 
 
     
-    def main(self):
+    def main(self, _automatic = True):
         
         first_frame = self.split_video_frames()
-        masks = self.automatic_mask_generation(first_frame)
-        print("masks generated")
+        if _automatic:
+            masks = self.automatic_mask_generation(first_frame)
+            print("masks generated")
 
-        self.model = None
-        torch.cuda.empty_cache()
-        gc.collect()
+            self.model = None
+            torch.cuda.empty_cache()
+            gc.collect()
 
-        self.track_masks_in_frames(masks)
+            self.track_masks_in_frames(masks=masks)
+
+        else:
+            points = self.get_point_promts()
+            self.track_masks_in_frames(points = points)
 
 
 
@@ -118,9 +153,9 @@ if __name__ == "__main__":
     torch.cuda.empty_cache()
     gc.collect()
     input_video_path = "/home/niru/codes/disassembly/video-segmentation/input_video.mp4"
-    output_video_path = "/home/niru/codes/disassembly/video-segmentation/final_output_automatic.mp4"
+    output_video_path = "/home/niru/codes/disassembly/video-segmentation/final_output.mp4"
     checkpoint_path = "/home/niru/codes/disassembly/video-segmentation/segment-anything-2/checkpoints/sam2_hiera_tiny.pt"
     config = "sam2_hiera_t.yaml"
     
     video_segmentation = automatic_video_segmentation(input_video_path, output_video_path, checkpoint_path, config)
-    video_segmentation.main()
+    video_segmentation.main(_automatic = False)
