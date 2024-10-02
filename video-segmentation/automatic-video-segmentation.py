@@ -117,9 +117,9 @@ class automatic_video_segmentation:
 if __name__ == "__main__":
     torch.cuda.empty_cache()
     gc.collect()
-    input_video_path = "/home/niru/codes/disassembly/SAM2/input_video.mp4"
-    output_video_path = "/home/niru/codes/disassembly/SAM2/final_output_automatic.mp4"
-    checkpoint_path = "/home/niru/codes/disassembly/SAM2/segment-anything-2/checkpoints/sam2_hiera_tiny.pt"
+    input_video_path = "/home/niru/codes/disassembly/video-segmentation/input_video.mp4"
+    output_video_path = "/home/niru/codes/disassembly/video-segmentation/final_output_automatic.mp4"
+    checkpoint_path = "/home/niru/codes/disassembly/video-segmentation/segment-anything-2/checkpoints/sam2_hiera_tiny.pt"
     config = "sam2_hiera_t.yaml"
     
     video_segmentation = automatic_video_segmentation(input_video_path, output_video_path, checkpoint_path, config)
