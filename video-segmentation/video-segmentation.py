@@ -114,20 +114,29 @@ class automatic_video_segmentation:
             directory="video-frames", 
             extensions=["jpeg"]))
         
+        tracked_masks = {}
+        
         with sv.VideoSink(self.output_video_path, video_info=video_info) as sink:
             for frame_idx, object_ids, mask_logits in self.model.propagate_in_video(self.inference_state):
                 frame = cv2.imread(frames_paths[frame_idx])
                 masks = (mask_logits > 0.0).cpu().numpy()
-                N, X, H, W = masks.shape
-                masks = masks.reshape(N * X, H, W)
+                combined_masks = masks.any(axis=1)
+                tracked_masks[frame_idx] = {
+                    object_label: combined_masks[i]
+                    for i, object_label in enumerate(object_ids)
+                }
+
+                # N, X, H, W = masks.shape
+                # masks = masks.reshape(N * X, H, W)
                 detections = sv.Detections(
-                    xyxy=sv.mask_to_xyxy(masks=masks),
-                    mask=masks,
+                    xyxy=sv.mask_to_xyxy(masks=combined_masks),
+                    mask=combined_masks,
                     tracker_id=np.array(object_ids)
                 )
                 frame = mask_annotator.annotate(frame, detections)
                 sink.write_frame(frame)
 
+        return tracked_masks
 
     
     def main(self, _automatic = True):
@@ -141,21 +150,24 @@ class automatic_video_segmentation:
             torch.cuda.empty_cache()
             gc.collect()
 
-            self.track_masks_in_frames(masks=masks)
+            tracked_masks = self.track_masks_in_frames(masks=masks)
 
         else:
             points = self.get_point_promts()
-            self.track_masks_in_frames(points = points)
+            tracked_masks = self.track_masks_in_frames(points = points)
 
+        return tracked_masks
 
 
 if __name__ == "__main__":
     torch.cuda.empty_cache()
-    gc.collect()
+    gc.collect()cd
     input_video_path = "/home/niru/codes/disassembly/video-segmentation/input_video.mp4"
     output_video_path = "/home/niru/codes/disassembly/video-segmentation/final_output.mp4"
-    checkpoint_path = "/home/niru/codes/disassembly/video-segmentation/segment-anything-2/checkpoints/sam2_hiera_tiny.pt"
-    config = "sam2_hiera_t.yaml"
+    checkpoint_path = "/home/niru/codes/disassembly/video-segmentation/segment-anything-2/checkpoints/sam2_hiera_small.pt"
+    config = "sam2_hiera_s.yaml"
     
     video_segmentation = automatic_video_segmentation(input_video_path, output_video_path, checkpoint_path, config)
-    video_segmentation.main(_automatic = False)
+    tracked_masks = video_segmentation.main(_automatic = True)
+
+    np.save("../object-detection/tracked_masks", tracked_masks)
