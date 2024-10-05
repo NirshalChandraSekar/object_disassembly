@@ -206,10 +206,11 @@ class automatic_video_segmentation:
         # Propagate masks across frames and save the segmented video
         with sv.VideoSink(self.output_video_path, video_info=video_info) as sink:
             for frame_idx, object_ids, mask_logits in self.model.propagate_in_video(self.inference_state):
-                frame = cv2.imread(frames_paths[frame_idx])
+                frame_path = frames_paths[frame_idx]
+                frame = cv2.imread(frame_path)
                 masks = (mask_logits > 0.0).cpu().numpy()
                 combined_masks = masks.any(axis=1)
-                tracked_masks[frame_idx] = {
+                tracked_masks[os.path.basename(frame_path)] = {
                     object_label: combined_masks[i]
                     for i, object_label in enumerate(object_ids)
                 }
