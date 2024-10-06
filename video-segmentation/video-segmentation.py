@@ -92,11 +92,16 @@ class automatic_video_segmentation:
         """
         Generate masks automatically using the SAM2 model.
 
+        This method initializes the SAM2 model, generates segmentation masks from the 
+        provided first frame, and removes the mask whose area is closest to the area 
+        of the original image size.
+
         Parameters:
-            first_frame (numpy.ndarray): The first frame of the video.
+            first_frame (numpy.ndarray): The first frame of the video as a NumPy array.
 
         Returns:
-            masks (list): A list of generated masks.
+            list: A list of generated masks after removing the closest one to the original 
+                image size.
         """
         print("automatic_mask_generation")
         
@@ -108,7 +113,26 @@ class automatic_video_segmentation:
         predictor = SAM2AutomaticMaskGenerator(self.model, points_per_side=8)
         masks = predictor.generate(first_frame)
 
+        areas = []  
+
+        image_height, image_width = masks[0]["segmentation"].shape
+        original_image_size = image_height * image_width
+
+        for i in range(len(masks)):
+            mask = masks[i]["segmentation"]
+            contours, _ = cv2.findContours(mask.astype(np.uint8), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+            contours = [cv2.approxPolyDP(contour, 0.001 * cv2.arcLength(contour, True), True) for contour in contours]
+
+            largest_contour = max(contours, key=cv2.contourArea)
+            contour_area = cv2.contourArea(largest_contour)
+
+            areas.append(contour_area)
+
+        closest_idx = np.argmin([abs(area - original_image_size) for area in areas])
+        masks.pop(closest_idx)
+
         return masks
+
     
     def get_point_promts(self):
         """

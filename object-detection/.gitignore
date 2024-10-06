@@ -1,2 +1,7 @@
 tracked_masks.npy
 dataset/*
+detection_results/*
+runs/*
+trial_models/*
+yolo11n-seg.pt
+yolo11n.pt
