@@ -202,7 +202,7 @@ class automatic_video_segmentation:
         print("model updated")
 
         # Initialize inference state for video propagation
-        self.inference_state = self.model.init_state("video-frames")
+        self.inference_state = self.model.init_state("video-frames", offload_video_to_cpu=True)
         self.model.reset_state(self.inference_state)
 
         # Add masks or points to the model for tracking

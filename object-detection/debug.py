@@ -2,8 +2,36 @@ import numpy as np
 import cv2
 import matplotlib.pyplot as plt
 import os
+import pandas as pd
 
-tracked_points = np.load("tracked_masks.npy", allow_pickle=True).item()
+
+df = pd.read_csv("runs/segment/train/results.csv")
+print(df.head())
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# tracked_points = np.load("tracked_masks.npy", allow_pickle=True).item()
 
 # print("tracked_points", len(tracked_points))
 # for frame in tracked_points:
@@ -28,37 +56,37 @@ tracked_points = np.load("tracked_masks.npy", allow_pickle=True).item()
 #         f.writelines(write_buffer)
 
 # visualise mask contour
-img = cv2.imread("dataset/train/images/00000.jpeg")
-img_width, img_height = img.shape[1], img.shape[0]
-txt_file = "/home/niru/codes/disassembly/object-detection/dataset/train/labels/00000.txt"
-black_img = np.zeros((img_height, img_width), dtype=np.uint8)
+# img = cv2.imread("dataset/train/images/00000.jpeg")
+# img_width, img_height = img.shape[1], img.shape[0]
+# txt_file = "/home/niru/codes/disassembly/object-detection/dataset/train/labels/00000.txt"
+# black_img = np.zeros((img_height, img_width), dtype=np.uint8)
 
 
-with open(txt_file, "r") as file:
-    lines = file.readlines()
+# with open(txt_file, "r") as file:
+#     lines = file.readlines()
 
-# Iterate over each line to extract contours
-for line in lines:
-    data = line.strip().split()
+# # Iterate over each line to extract contours
+# for line in lines:
+#     data = line.strip().split()
     
-    # First element is the mask ID, ignore it for now
-    mask_id = int(data[0])
+#     # First element is the mask ID, ignore it for now
+#     mask_id = int(data[0])
     
-    # The rest of the data are normalized coordinates (x1, y1, x2, y2, ...)
-    points = np.array(data[1:], dtype=float).reshape(-1, 2)
+#     # The rest of the data are normalized coordinates (x1, y1, x2, y2, ...)
+#     points = np.array(data[1:], dtype=float).reshape(-1, 2)
     
-    # Denormalize the points back to the original image dimensions
-    points[:, 0] *= img_width  # Scale x-coordinates
-    points[:, 1] *= img_height  # Scale y-coordinates
+#     # Denormalize the points back to the original image dimensions
+#     points[:, 0] *= img_width  # Scale x-coordinates
+#     points[:, 1] *= img_height  # Scale y-coordinates
     
-    # Convert points to integer coordinates
-    points = points.astype(int)
+#     # Convert points to integer coordinates
+#     points = points.astype(int)
     
-    # Draw the contour on the black image
-    points = points.reshape((-1, 1, 2))  # Reshape for cv2.drawContours
-    cv2.drawContours(black_img, [points], -1, (255), thickness=1)  # Draw contour in white
+#     # Draw the contour on the black image
+#     points = points.reshape((-1, 1, 2))  # Reshape for cv2.drawContours
+#     cv2.drawContours(black_img, [points], -1, (255), thickness=1)  # Draw contour in white
 
-# Display the image with contours
-plt.imshow(black_img, cmap="gray")
-plt.title("Contours")
-plt.show()
+# # Display the image with contours
+# plt.imshow(black_img, cmap="gray")
+# plt.title("Contours")
+# plt.show()

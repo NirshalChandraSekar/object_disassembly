@@ -4,6 +4,9 @@ import matplotlib.pyplot as plt
 import os
 from ultralytics import YOLO
 import random
+import wandb
+
+wandb.login(key="41709eaefe3692842bbaeaf2fea0b48dfc0673b8")
 
 class generate_dataset:
     def __init__(self):
@@ -103,14 +106,26 @@ class generate_dataset:
 
 class detect_parts:
     def __init__(self):
-        self.model = YOLO("yolo11n-seg.pt")
+        self.model = YOLO("yolo11s.yaml")
         self.results = None
+        # print(self.model)
 
     def train(self):
-        self.results = self.model.train(data="dataset/dataset.yaml", epochs=50, batch=40, device=0)
+        self.results = self.model.train(data="dataset/dataset.yaml", 
+                                        epochs=100, 
+                                        batch=0.90, 
+                                        device=0,
+                                        # degrees=45,
+                                        # translate=0.1,
+                                        # flipud=0.3,
+                                        # fliplr=0.3,
+                                        copy_paste=0.5,
+                                        # freeze=10,
+                                        project="runs",
+                                        name="yolo11s-seg training")
 
     def detect(self, img_paths):
-        model = YOLO("runs/segment/train/weights/best.pt")
+        model = YOLO("runs/yolo11s-seg training3/weights/best.pt")
         
         results_dir = "detection_results"
         os.makedirs(results_dir, exist_ok=True)
@@ -118,7 +133,7 @@ class detect_parts:
         # Loop through each image path in the list
         for img_path in img_paths:
             # Perform inference on the image
-            results = model(img_path)
+            results = model.predict(img_path, conf=0.8, iou=0.1)
 
             # Extract base image name for unique saving
             img_name = os.path.basename(img_path).split('.')[0]  # Extract base image name
@@ -148,22 +163,27 @@ class detect_parts:
 if __name__ == "__main__":
     
     mask_dict = np.load("tracked_masks.npy", allow_pickle=True).item()
+    # print(mask_dict)
     
-    print("generating dataset")
-    dataset = generate_dataset()
-    dataset.main(mask_dict)
+    # print("generating dataset")
+    # dataset = generate_dataset()
+    # dataset.main(mask_dict)
 
-    print("training model")
+    # # print("training model")
     predictor = detect_parts()
-    predictor.train()
+    # predictor.train()
 
     print("detecting parts")
-    predictor.detect(["dataset/test_images/IMG_0319.jpg", 
-                      "dataset/test_images/IMG_0320.jpg", 
-                      "dataset/test_images/IMG_0321.jpg",
-                      "dataset/test_images/IMG_0322.jpg",
-                      "dataset/test_images/IMG_0323.jpg",
-                      "dataset/test_images/IMG_0324.jpg",
-                      "dataset/test_images/IMG_0325.jpg",
-                      "dataset/test_images/IMG_0326.jpg",])
+    predictor.detect([
+                        "test_images/IMG_0319.jpg", 
+                      "test_images/IMG_0320.jpg", 
+                      "test_images/IMG_0321.jpg",
+                      "test_images/IMG_0322.jpg",
+                      "test_images/IMG_0323.jpg",
+                      "test_images/IMG_0324.jpg",
+                      "test_images/IMG_0325.jpg",
+                      "test_images/IMG_0326.jpg",
+                      "test_images/IMG_0337.jpg",
+                      "test_images/IMG_0338.jpg",
+                      "test_images/IMG_0339.jpg",])
 
