@@ -12,11 +12,10 @@ import matplotlib.pyplot as plt
 import os
 from ultralytics import YOLO
 import random
-import wandb
 
 # Author: Nirshal Chandra Sekar
 # Log in to Weights & Biases (wandb) for experiment tracking and management
-wandb.login(key="41709eaefe3692842bbaeaf2fea0b48dfc0673b8")
+# wandb.login(key="41709eaefe3692842bbaeaf2fea0b48dfc0673b8")
 
 class generate_dataset:
     """
@@ -157,7 +156,7 @@ class detect_parts:
         """
         Initializes the YOLO model for training and detection.
         """
-        self.model = YOLO("yolo11s.yaml")
+        self.model = YOLO("yolo11s-seg.pt")
         self.results = None
 
     def train(self):
@@ -169,42 +168,42 @@ class detect_parts:
                                         batch=0.90, 
                                         device=0,
                                         copy_paste=0.5,
-                                        project="runs",
-                                        name="yolo11s-seg training")
+                                        degrees = 15,
+                                        flipud = 0.5,
+                                        )
 
-    def detect(self, img_paths):
+    def detect(self, img_path):
         """
         Performs object detection on a list of test images using the trained YOLO model.
         
         Args:
             img_paths (list): List of file paths for the images to be processed.
         """
-        model = YOLO("runs/yolo11s-seg training3/weights/best.pt")
-        results_dir = "detection_results"
-        os.makedirs(results_dir, exist_ok=True)
+        model = YOLO("runs/segment/train/weights/best.pt")
 
-        # Loop over each image and apply the trained model to detect objects
-        for img_path in img_paths:
-            results = model.predict(img_path, conf=0.8, iou=0.1)
-            img_name = os.path.basename(img_path).split('.')[0]
+        original_image = cv2.imread(img_path)
+        height, width = original_image.shape[:2]
+        
+        results = model.predict(img_path, conf=0.8, device=0)
+        combined_mask = np.zeros((height, width), dtype=original_image.dtype)
 
-            # Process results and save output images
-            for idx, result in enumerate(results):
-                boxes = result.boxes
-                masks = result.masks
-                keypoints = result.keypoints
-                probs = result.probs
-                obb = result.obb
+        for i in range(len(results[0].masks)):
+            mask = results[0].masks[i]
+            mask = np.asanyarray(mask.data.cpu().squeeze(), dtype=original_image.dtype)
+            mask = cv2.resize(mask, (width, height), interpolation=cv2.INTER_CUBIC)
+            mask *= i + 1
+            combined_mask += mask
 
-                result.show()
-                save_path = os.path.join(results_dir, f"{img_name}_result_{idx}.jpg")
-                result.save(filename=save_path)
-                print(f"Saved result for image '{img_name}' as {save_path}")
+        save_mask = combined_mask * 255 / (i+1)
+        cv2.imwrite("combined_mask.jpg", save_mask)
+
+        return combined_mask
+        
 
 
 if __name__ == "__main__":
     # Load pre-saved mask data for dataset generation
-    mask_dict = np.load("tracked_masks.npy", allow_pickle=True).item()
+    # mask_dict = np.load("tracked_masks.npy", allow_pickle=True).item()
     
     # Uncomment the following to generate a dataset
     # dataset = generate_dataset()
@@ -214,16 +213,6 @@ if __name__ == "__main__":
     predictor = detect_parts()
     # predictor.train()
 
-    print("detecting parts")
-    predictor.detect([
-        "test_images/IMG_0319.jpg", 
-        "test_images/IMG_0320.jpg", 
-        "test_images/IMG_0321.jpg",
-        "test_images/IMG_0322.jpg",
-        "test_images/IMG_0323.jpg",
-        "test_images/IMG_0324.jpg",
-        "test_images/IMG_0325.jpg",
-        "test_images/IMG_0326.jpg",
-        "test_images/IMG_0337.jpg",
-        "test_images/IMG_0338.jpg",
-        "test_images/IMG_0339.jpg",])
+    # print("detecting parts")
+    input_for_cgn = predictor.detect("test_images/IMG_0325.jpg")
+    np.save("input_for_cgn.npy", input_for_cgn)
