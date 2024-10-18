@@ -1,4 +1,4 @@
-tracked_masks.npy
+*.npy
 dataset/*
 detection_results/*
 runs/*

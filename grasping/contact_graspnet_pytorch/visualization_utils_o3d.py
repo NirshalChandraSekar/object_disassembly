@@ -10,7 +10,7 @@ from matplotlib import cm
 
 from scipy.spatial.transform import Rotation as R
 
-import mesh_utils
+import contact_graspnet_pytorch.mesh_utils
 
 
 # To fix GLIB open3d error:
@@ -242,7 +242,7 @@ def draw_grasps(vis, grasps, cam_pose, gripper_openings, colors=[(0, 1., 0)], sh
         show_gripper_mesh {bool} -- Renders the gripper mesh for one of the grasp poses (default: {False})
     """
 
-    gripper = mesh_utils.create_gripper('panda')
+    gripper = contact_graspnet_pytorch.mesh_utils.create_gripper('panda')
     gripper_control_points = gripper.get_control_point_tensor(1, False, convex_hull=False).squeeze()
     mid_point = 0.5*(gripper_control_points[1, :] + gripper_control_points[2, :])
     grasp_line_plot = np.array([np.zeros((3,)), mid_point, gripper_control_points[1], gripper_control_points[3],

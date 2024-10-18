@@ -179,9 +179,10 @@ class detect_parts:
         Args:
             img_paths (list): List of file paths for the images to be processed.
         """
-        model = YOLO("runs/segment/train/weights/best.pt")
+        model = YOLO("/home/rpmdt05/Code/Niru/object_disassembly/object-detection/runs/best.pt")
 
-        original_image = cv2.imread(img_path)
+        # original_image = cv2.imread(img_path)
+        original_image = img_path
         height, width = original_image.shape[:2]
         
         results = model.predict(img_path, conf=0.8, device=0)
@@ -214,5 +215,10 @@ if __name__ == "__main__":
     # predictor.train()
 
     # print("detecting parts")
-    input_for_cgn = predictor.detect("test_images/IMG_0325.jpg")
-    np.save("input_for_cgn.npy", input_for_cgn)
+    image = np.load("/home/rpmdt05/Code/Niru/object_disassembly/streming-pipeline/color_image.npy")
+    print("type of image", type(image))
+    cv2.imshow('Color Image', image)
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
+    combined_mask = predictor.detect(image)
+    np.save("combined_mask.npy", combined_mask)
