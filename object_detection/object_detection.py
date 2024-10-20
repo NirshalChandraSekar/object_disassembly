@@ -196,7 +196,7 @@ class detect_parts:
             combined_mask += mask
 
         save_mask = combined_mask * 255 / (i+1)
-        cv2.imwrite("combined_mask.jpg", save_mask)
+        cv2.imwrite("data/combined_mask.jpg", save_mask)
 
         return combined_mask
         

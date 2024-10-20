@@ -287,9 +287,9 @@ if __name__ == "__main__":
     gc.collect()
 
     # Define paths and model parameters
-    input_video_path = "/home/niru/codes/disassembly/video-segmentation/input_video.mp4"
-    output_video_path = "/home/niru/codes/disassembly/video-segmentation/final_output.mp4"
-    checkpoint_path = "/home/niru/codes/disassembly/video-segmentation/segment-anything-2/checkpoints/sam2_hiera_small.pt"
+    input_video_path = "video-segmentation/data/input_video.mp4"
+    output_video_path = "video-segmentation/data/final_output.mp4"
+    checkpoint_path = "video-segmentation/segment-anything-2/checkpoints/sam2_hiera_small.pt"
     config = "sam2_hiera_s.yaml"
     
     # Instantiate and run the video segmentation class

@@ -2,6 +2,7 @@
 dataset/*
 detection_results/*
 runs/*
+data/*
 trial_models/*
 yolo11n-seg.pt
 yolo11n.pt
