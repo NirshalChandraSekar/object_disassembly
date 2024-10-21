@@ -13,9 +13,6 @@ import os
 from ultralytics import YOLO
 import random
 
-# Author: Nirshal Chandra Sekar
-# Log in to Weights & Biases (wandb) for experiment tracking and management
-# wandb.login(key="41709eaefe3692842bbaeaf2fea0b48dfc0673b8")
 
 class generate_dataset:
     """
@@ -30,17 +27,17 @@ class generate_dataset:
         and validation (20%) sets.
         """
         # Create dataset folder structure if it doesn't exist
-        if not os.path.exists("dataset"):
-            os.mkdir("dataset")
-            os.mkdir("dataset/train")
-            os.mkdir("dataset/train/images")
-            os.mkdir("dataset/train/labels")
-            os.mkdir("dataset/val")
-            os.mkdir("dataset/val/images")
-            os.mkdir("dataset/val/labels")
+        if not os.path.exists("object_detection/data/dataset"):
+            os.mkdir("object_detection/data/dataset")
+            os.mkdir("object_detection/data/dataset/train")
+            os.mkdir("object_detection/data/dataset/train/images")
+            os.mkdir("object_detection/data/dataset/train/labels")
+            os.mkdir("object_detection/data/dataset/val")
+            os.mkdir("object_detection/data/dataset/val/images")
+            os.mkdir("object_detection/data/dataset/val/labels")
 
         # Load and sort video frames, then split into training and validation
-        self.frames = sorted(os.listdir("../video-segmentation/video-frames"))
+        self.frames = sorted(os.listdir("video_segmentation/data/video_frames"))
         self.train_split = int(len(self.frames) * 0.8)
         self.val_split = int(len(self.frames) * 0.2)
         self.train_frames = self.frames[:self.train_split]
@@ -53,13 +50,13 @@ class generate_dataset:
         """
         # Save training images
         for frame in self.train_frames:
-            img = cv2.imread("../video-segmentation/video-frames/" + frame)
-            cv2.imwrite("dataset/train/images/" + frame, img)
+            img = cv2.imread("video_segmentation/data/video_frames/" + frame)
+            cv2.imwrite("object_detection/data/dataset/train/images/" + frame, img)
 
         # Save validation images
         for frame in self.val_frames:
-            img = cv2.imread("../video-segmentation/video-frames/" + frame)
-            cv2.imwrite("dataset/val/images/" + frame, img)
+            img = cv2.imread("video_segmentation/data/video_frames/" + frame)
+            cv2.imwrite("object_detection/data/dataset/val/images/" + frame, img)
 
     def write_labels(self, mask_dict_split, output_dir):
         """
@@ -103,23 +100,23 @@ class generate_dataset:
         mask_dict_val_split = {key: mask_dict[key] for key in val_keys}
 
         # Write label files for training and validation sets
-        self.write_labels(mask_dict_train_split, "dataset/train/labels/")
-        self.write_labels(mask_dict_val_split, "dataset/val/labels/")
+        self.write_labels(mask_dict_train_split, "object_detection/data/dataset/train/labels/")
+        self.write_labels(mask_dict_val_split, "object_detection/data/dataset/val/labels/")
 
     def create_yaml(self):
         """
         Generates a YAML configuration file required by YOLO for specifying dataset paths 
         and class names.
         """
-        base_path = "../dataset"
+        base_path = "object_detection/data/dataset"
         train_path = "train"
         val_path = "val"
 
         # Read the first training label file to determine class names
-        first_text_file = sorted(os.listdir("dataset/train/labels"))[0]
+        first_text_file = sorted(os.listdir("object_detection/data/dataset/train/labels"))[0]
         mask_id_to_name = {}
 
-        with open(os.path.join("dataset/train/labels", first_text_file), "r") as f:
+        with open(os.path.join("object_detection/data/dataset/train/labels", first_text_file), "r") as f:
             lines = f.readlines()
             for line in lines:
                 parts = line.split()
@@ -128,7 +125,7 @@ class generate_dataset:
                 mask_id_to_name[int(mask_id)] = mask_name
 
         # Write the YAML file
-        with open("dataset/dataset.yaml", "w") as f:
+        with open("object_detection/data/dataset/dataset.yaml", "w") as f:
             f.write(f"path: {base_path}\n")
             f.write(f"train: {train_path}\n")
             f.write(f"val: {val_path}\n")
@@ -163,7 +160,7 @@ class detect_parts:
         """
         Trains the YOLO model using the dataset generated from video frames and masks.
         """
-        self.results = self.model.train(data="dataset/dataset.yaml", 
+        self.results = self.model.train(data="object_detection/data/dataset/dataset.yaml", 
                                         epochs=50, 
                                         batch=0.90, 
                                         device=0,
@@ -179,7 +176,7 @@ class detect_parts:
         Args:
             img_paths (list): List of file paths for the images to be processed.
         """
-        model = YOLO("/home/rpmdt05/Code/Niru/object_disassembly/object-detection/runs/best.pt")
+        model = YOLO("object_detection/data/runs/segment/train/weights/best.pt")
 
         # original_image = cv2.imread(img_path)
         original_image = img_path
@@ -196,7 +193,7 @@ class detect_parts:
             combined_mask += mask
 
         save_mask = combined_mask * 255 / (i+1)
-        cv2.imwrite("data/combined_mask.jpg", save_mask)
+        cv2.imwrite("object_detection/data/combined_mask.jpg", save_mask)
 
         return combined_mask
         

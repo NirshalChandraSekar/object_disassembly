@@ -1,3 +1,2 @@
-segment-anything-2/*
-video-frames/*.jpeg
 data/*
+sam2/*

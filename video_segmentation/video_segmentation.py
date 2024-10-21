@@ -76,15 +76,15 @@ class automatic_video_segmentation:
         frames_generator = sv.get_video_frames_generator(self.input_video_path)
         
         # Sink to save the individual frames as JPEG files
-        sink = sv.ImageSink(target_dir_path="video-frames",
+        sink = sv.ImageSink(target_dir_path="video_segmentation/data/video_frames",
                             image_name_pattern="{:05d}.jpeg")
         with sink:
             for frame in frames_generator:
                 sink.save_image(frame)
 
         # Retrieve the first frame for mask generation
-        frame_files = sorted(os.listdir("video-frames"))
-        first_frame = cv2.imread(os.path.join("video-frames", frame_files[0]))
+        frame_files = sorted(os.listdir("video_segmentation/data/video_frames"))
+        first_frame = cv2.imread(os.path.join("video_segmentation/data/video_frames", frame_files[0]))
 
         return first_frame
     
@@ -110,7 +110,7 @@ class automatic_video_segmentation:
         print("model loaded")
         
         # Use the automatic mask generator to generate masks on the first frame
-        predictor = SAM2AutomaticMaskGenerator(self.model, points_per_side=8)
+        predictor = SAM2AutomaticMaskGenerator(self.model, points_per_side=10, box_nms_thresh=0.5)
         masks = predictor.generate(first_frame)
 
         areas = []  
@@ -131,6 +131,12 @@ class automatic_video_segmentation:
         closest_idx = np.argmin([abs(area - original_image_size) for area in areas])
         masks.pop(closest_idx)
 
+        # save the masks as different images
+        
+        for i in range(len(masks)):
+            mask = masks[i]["segmentation"]
+            cv2.imwrite(f"video_segmentation/data/mask_{i}.jpeg", mask.astype(np.uint8) * 255)
+
         return masks
 
     
@@ -150,7 +156,7 @@ class automatic_video_segmentation:
 
         # Get manual points from user
         points = []
-        img = cv2.imread("video-frames/00000.jpeg")
+        img = cv2.imread("video_segmentation/data/video_frames/00000.jpeg")
         cv2.imshow('image', img)
         cv2.setMouseCallback('image', click_event)
         cv2.waitKey(0)
@@ -202,7 +208,7 @@ class automatic_video_segmentation:
         print("model updated")
 
         # Initialize inference state for video propagation
-        self.inference_state = self.model.init_state("video-frames", offload_video_to_cpu=True)
+        self.inference_state = self.model.init_state("video_segmentation/data/video_frames", offload_video_to_cpu=True)
         self.model.reset_state(self.inference_state)
 
         # Add masks or points to the model for tracking
@@ -222,7 +228,7 @@ class automatic_video_segmentation:
         # Get video info and sorted list of frame paths
         video_info = sv.VideoInfo.from_video_path(self.input_video_path)
         frames_paths = sorted(sv.list_files_with_extensions(
-            directory="video-frames", 
+            directory="video_segmentation/data/video_frames", 
             extensions=["jpeg"]))
         
         tracked_masks = {}
@@ -289,7 +295,7 @@ if __name__ == "__main__":
     # Define paths and model parameters
     input_video_path = "video-segmentation/data/input_video.mp4"
     output_video_path = "video-segmentation/data/final_output.mp4"
-    checkpoint_path = "video-segmentation/segment-anything-2/checkpoints/sam2_hiera_small.pt"
+    checkpoint_path = "sam2/checkpoints/sam2_hiera_small.pt"
     config = "sam2_hiera_s.yaml"
     
     # Instantiate and run the video segmentation class
