@@ -17,7 +17,7 @@ print("Points Data Shape: ", points_data.shape)
 
 depth_image = depth_image.astype(np.float32)  # Convert to float32
 depth_image *= 0.00025  # Multiply by 0.01
-print("deptj_image", depth_image[240])
+# print("deptj_image", depth_image[240])
 
 
 

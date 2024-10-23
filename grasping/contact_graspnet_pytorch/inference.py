@@ -18,8 +18,8 @@ from contact_graspnet_pytorch.data import load_available_input_data
 
 class CGN():
     def __init__(self,input_path,K=None,z_range = [0.2,10],visualize = True,forward_passes=1):
-        self.global_config = config_utils.load_config('cgn/checkpoints/contact_graspnet')
-        self.ckpt_dir = 'cgn/checkpoints/contact_graspnet'
+        self.global_config = config_utils.load_config('grasping/checkpoints/contact_graspnet/config.yaml')
+        self.ckpt_dir = 'grasping/checkpoints/contact_graspnet/checkpoints'
         self.input_paths = input_path
         self.local_regions = True
         self.filter_grasps = True
