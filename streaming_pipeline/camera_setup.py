@@ -4,17 +4,20 @@ import cv2
 
 class stream_realsense:
     def __init__(self):
-        self.pipeline = rs.pipeline()
-        self.config = rs.config()
-        self.config.enable_stream(rs.stream.depth, 640, 480, rs.format.z16, 30)
-        self.config.enable_stream(rs.stream.color, 640, 480, rs.format.bgr8, 30)
-        self.pipeline.start(self.config)
+        pass
 
     def image_stream(self):
+
+        pipeline = rs.pipeline()
+        config = rs.config()
+        config.enable_stream(rs.stream.depth, 640, 480, rs.format.z16, 30)
+        config.enable_stream(rs.stream.color, 640, 480, rs.format.bgr8, 30)
+        pipeline.start(config)
+
         align_to = rs.stream.color
         align = rs.align(align_to)
 
-        frames = self.pipeline.wait_for_frames()
+        frames = pipeline.wait_for_frames()
         aligned_frames = align.process(frames)
 
         depth_frame = aligned_frames.get_depth_frame()
@@ -62,8 +65,8 @@ if __name__ == "__main__":
     cv2.waitKey(0)
     cv2.destroyAllWindows()
 
-    np.save("color_image.npy", color_image)
-    np.save("depth_image.npy", depth_image)
-    np.save("points_data.npy", points_data)
-    np.save("k_matrix.npy", k_matrix)
+    np.save("data/color_image.npy", color_image)
+    np.save("data/depth_image.npy", depth_image)
+    np.save("data/points_data.npy", points_data)
+    np.save("data/k_matrix.npy", k_matrix)
 

@@ -50,7 +50,7 @@ if __name__ == "__main__":
     # dataset.main(tracked_masks)
 
     # TRAIN THE MODEL
-    # predictor = detect_parts()
+    predictor = detect_parts()
     # predictor.train()
 
 
@@ -59,7 +59,7 @@ if __name__ == "__main__":
     """
     # stream = stream_realsense()
     # color_image, depth_image, points_data, k_matrix = stream.image_stream()
-    # depth_image = depth_image*0.01 # scaling factor for the D405 realsense camera
+    # # depth_image = depth_image*0.00025 # scaling factor for the D405 realsense camera
     
     # cv2.imshow('Color Image', color_image)
     # cv2.waitKey(0)
@@ -80,15 +80,16 @@ if __name__ == "__main__":
 
     # DETECT PARTS
     color_image = np.load("streaming_pipeline/data/color_image.npy")
-    # combined_mask = predictor.detect(color_image)
-    # np.save("object_detection/data/combined_mask.npy", combined_mask)
+    combined_mask = predictor.detect(color_image)
+    np.save("object_detection/data/combined_mask.npy", combined_mask)
 
     
     """
     GRASP PLANNING
     """
     depth_image = np.load("streaming_pipeline/data/depth_image.npy")
-    depth_image *= 0.01
+    depth_image = depth_image.astype(np.float32)  # Convert to float32
+    depth_image *= 0.00025  
     k_matrix = np.load("streaming_pipeline/data/k_matrix.npy")
     combined_mask = np.load("object_detection/data/combined_mask.npy")
     input_for_cgn = {
@@ -99,8 +100,8 @@ if __name__ == "__main__":
                     }
 
     np.save("grasping/input_for_cgn.npy", input_for_cgn)
-    cgn = CGN(input_path="grasping/input_for_cgn.npy", K=k_matrix, z_range = [0,50], visualize=True, forward_passes=2)
+    cgn = CGN(input_path="grasping/input_for_cgn.npy", K=k_matrix, z_range = [0,10], visualize=True, forward_passes=2)
 
     pred_grasps, grasp_scores, contact_pts, gripper_openings = cgn.inference()
 
-    # print("scores", grasp_scores)
+    print("scores", grasp_scores)
