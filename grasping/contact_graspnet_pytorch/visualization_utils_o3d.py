@@ -109,7 +109,7 @@ def show_image(rgb, segmap):
         cmap.set_under(alpha=0.0)
         plt.imshow(segmap, cmap=cmap, alpha=0.5, vmin=0.0001)
 
-    base_path = './contact_graspnet_pytorch/testers/'
+    base_path = 'grasping/contact_graspnet_pytorch/testers/'
     debug_path = os.path.join(base_path, 'debug_img')
     if not os.path.exists(debug_path):
         os.makedirs(debug_path)

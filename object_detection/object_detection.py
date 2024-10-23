@@ -161,7 +161,7 @@ class detect_parts:
         Trains the YOLO model using the dataset generated from video frames and masks.
         """
         self.results = self.model.train(data="object_detection/data/dataset/dataset.yaml", 
-                                        epochs=50, 
+                                        epochs=100, 
                                         batch=0.90, 
                                         device=0,
                                         copy_paste=0.5,
@@ -218,4 +218,4 @@ if __name__ == "__main__":
     cv2.waitKey(0)
     cv2.destroyAllWindows()
     combined_mask = predictor.detect(image)
-    np.save("combined_mask.npy", combined_mask)
+    np.save("object_detection/data/combined_mask.npy", combined_mask)

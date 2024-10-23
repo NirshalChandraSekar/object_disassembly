@@ -1,5 +1,5 @@
 *.pt
-results
+results/*
 checkpoints/*
 !checkpoints/contact_graspnet/checkpoints/*.pt
 !checkpoints/contact_graspnet

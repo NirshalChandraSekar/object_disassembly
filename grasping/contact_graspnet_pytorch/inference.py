@@ -123,7 +123,7 @@ class CGN():
             load_dict = {}
 
         
-        os.makedirs('results', exist_ok=True)
+        os.makedirs('grasping/results', exist_ok=True)
 
         # Process example test scenes
         for p in glob.glob(self.input_paths):
@@ -151,7 +151,7 @@ class CGN():
                                                                                         forward_passes=self.forward_passes)  
         
             # Save results
-            np.savez('results/predictions_{}'.format(os.path.basename(p.replace('png','npz').replace('npy','npz'))), 
+            np.savez('grasping/results/predictions_{}'.format(os.path.basename(p.replace('png','npz').replace('npy','npz'))), 
                     pc_full=pc_full, pred_grasps_cam=pred_grasps_cam, scores=scores, contact_pts=contact_pts, pc_colors=pc_colors, gripper_openings=gripper_openings)
 
             if self.visualize:

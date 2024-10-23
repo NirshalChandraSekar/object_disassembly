@@ -50,7 +50,7 @@ if __name__ == "__main__":
     # dataset.main(tracked_masks)
 
     # TRAIN THE MODEL
-    predictor = detect_parts()
+    # predictor = detect_parts()
     # predictor.train()
 
 
@@ -65,6 +65,7 @@ if __name__ == "__main__":
     # cv2.waitKey(0)
     # cv2.destroyAllWindows()
 
+    # cv2.imwrite("streaming_pipeline/data/color_image.jpg", color_image)
     # np.save("streaming_pipeline/data/color_image.npy", color_image)
     # np.save("streaming_pipeline/data/depth_image.npy", depth_image)
     # np.save("streaming_pipeline/data/points_data.npy", points_data)
@@ -80,15 +81,16 @@ if __name__ == "__main__":
     # DETECT PARTS
     color_image = np.load("streaming_pipeline/data/color_image.npy")
     # combined_mask = predictor.detect(color_image)
-    # np.save("combined_mask.npy", combined_mask)
+    # np.save("object_detection/data/combined_mask.npy", combined_mask)
 
     
     """
     GRASP PLANNING
     """
     depth_image = np.load("streaming_pipeline/data/depth_image.npy")
+    depth_image *= 0.01
     k_matrix = np.load("streaming_pipeline/data/k_matrix.npy")
-    combined_mask = np.load("combined_mask.npy")
+    combined_mask = np.load("object_detection/data/combined_mask.npy")
     input_for_cgn = {
                      'rgb': color_image,
                      'depth': depth_image,
@@ -96,7 +98,9 @@ if __name__ == "__main__":
                      'seg': combined_mask
                     }
 
-    np.save("input_for_cgn.npy", input_for_cgn)
-    cgn = CGN(input_path="input_for_cgn.npy", K=k_matrix, z_range = [0,50], visualize=True, forward_passes=1)
+    np.save("grasping/input_for_cgn.npy", input_for_cgn)
+    cgn = CGN(input_path="grasping/input_for_cgn.npy", K=k_matrix, z_range = [0,50], visualize=True, forward_passes=2)
 
     pred_grasps, grasp_scores, contact_pts, gripper_openings = cgn.inference()
+
+    # print("scores", grasp_scores)

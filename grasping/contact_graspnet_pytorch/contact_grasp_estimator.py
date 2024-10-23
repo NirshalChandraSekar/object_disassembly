@@ -308,7 +308,7 @@ class GraspEstimator:
 
         return pred_grasps_cam, scores, contact_pts, gripper_openings
     
-    def select_grasps(self, contact_pts, contact_conf, max_farthest_points = 150, num_grasps = 200, first_thres = 0.25, second_thres = 0.2, with_replacement=False):
+    def select_grasps(self, contact_pts, contact_conf, max_farthest_points = 150, num_grasps = 200, first_thres = 0.25, second_thres = 0.2, with_replacement=True):
         """
         Select subset of num_grasps by contact confidence thresholds and farthest contact point sampling. 
 

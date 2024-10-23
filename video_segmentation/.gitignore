@@ -1,2 +1,4 @@
 data/*
 sam2/*
+video_segmentation/sam2/*
+__pycache__/*
