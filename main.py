@@ -103,12 +103,15 @@ if __name__ == "__main__":
 
     np.save("grasping/input_for_cgn.npy", input_for_cgn)
 
+   
+
     global_config = config_utils.load_config("grasping/checkpoints/contact_graspnet", batch_size=2, arg_configs=[])
     print(str(global_config))
     print('pid: %s'%(str(os.getpid())))
     inference.inference(global_config,
                         "grasping/checkpoints/contact_graspnet",
                         "grasping/input_for_cgn.npy",
+                        # "/home/niru/Downloads/0.npy",
                         local_regions=True,
                         filter_grasps=True,
                         z_range=eval(str([0,10])),
