@@ -1,12 +1,13 @@
 from video_segmentation.video_segmentation import automatic_video_segmentation
 from streaming_pipeline.camera_setup import stream_realsense
 from object_detection.object_detection import detect_parts, generate_dataset
-from grasping.contact_graspnet_pytorch.inference import CGN
-
+from grasping.contact_graspnet_pytorch import inference
+from grasping.contact_graspnet_pytorch import config_utils
 import hydra
 import numpy as np
 import cv2
 import torch
+import os
 import gc
 
 
@@ -80,13 +81,14 @@ if __name__ == "__main__":
 
     # DETECT PARTS
     color_image = np.load("streaming_pipeline/data/color_image.npy")
-    combined_mask = predictor.detect(color_image)
-    np.save("object_detection/data/combined_mask.npy", combined_mask)
+    # combined_mask = predictor.detect(color_image)
+    # np.save("object_detection/data/combined_mask.npy", combined_mask)
 
     
     """
     GRASP PLANNING
     """
+
     depth_image = np.load("streaming_pipeline/data/depth_image.npy")
     depth_image = depth_image.astype(np.float32)  # Convert to float32
     depth_image *= 0.00025  
@@ -100,8 +102,28 @@ if __name__ == "__main__":
                     }
 
     np.save("grasping/input_for_cgn.npy", input_for_cgn)
-    cgn = CGN(input_path="grasping/input_for_cgn.npy", K=k_matrix, z_range = [0,10], visualize=True, forward_passes=2)
 
-    pred_grasps, grasp_scores, contact_pts, gripper_openings = cgn.inference()
+    global_config = config_utils.load_config("grasping/checkpoints/contact_graspnet", batch_size=2, arg_configs=[])
+    print(str(global_config))
+    print('pid: %s'%(str(os.getpid())))
+    inference.inference(global_config,
+                        "grasping/checkpoints/contact_graspnet",
+                        "grasping/input_for_cgn.npy",
+                        local_regions=True,
+                        filter_grasps=True,
+                        z_range=eval(str([0,10])),
+                        forward_passes=2,
+                        K=k_matrix,
 
-    print("scores", grasp_scores)
+                        )
+    
+    
+
+
+
+
+    # cgn = CGN(input_path="grasping/input_for_cgn.npy", K=k_matrix, z_range = [0,10], visualize=True, forward_passes=2)
+
+    # pred_grasps, grasp_scores, contact_pts, gripper_openings = cgn.inference()
+
+    # print("scores", grasp_scores)
