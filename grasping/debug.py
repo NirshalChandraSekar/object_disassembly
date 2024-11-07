@@ -88,13 +88,8 @@ color_image = np.load("../streaming_pipeline/data/color_image.npy", allow_pickle
 depth_image = np.load("../streaming_pipeline/data/depth_image.npy", allow_pickle=True)
 k_matrix = np.load("../streaming_pipeline/data/k_matrix.npy", allow_pickle=True)
 
-
-
-# # print("pred grasps cam[0] length: ", len(pred_grasps_cam[2]))
-# # print(pred_grasps_cam)
-
-# print(contact_pts)
-# print("pred grasps cam length: ", len(contact_pts[2]))
+depth_image = depth_image.astype(np.float32)
+print("depth image", depth_image)
 
 best_score_idx = {}
 for key in scores:
@@ -112,17 +107,18 @@ for key in contact_pts:
     best_contact_pts[key] = contact_pts[key][best_score_idx[key]]
 
 
+print(best_grasp_cam)
 
 
 ''' PLOT THE POINT CLOUD USING THE COLOR IMAGE, DEPTH IMAGE AND THE CAMERA INTRINSICS '''
 color_image = cv2.cvtColor(color_image, cv2.COLOR_BGR2RGB)
-depth_image = depth_image.astype(np.float32)
 # depth_image /= 0.00025
+
 # Convert images to Open3D format
 color = o3d.geometry.Image(color_image)
 depth = o3d.geometry.Image(depth_image)
 
-# depth
+# print("depth image", depth_image)
 
 # Create Open3D RGBD image from color and depth images
 rgbd_image = o3d.geometry.RGBDImage.create_from_color_and_depth(
@@ -135,17 +131,31 @@ intrinsic = o3d.camera.PinholeCameraIntrinsic(width, height, k_matrix[0, 0], k_m
 
 # Create point cloud from RGBD image and camera intrinsics
 pcd = o3d.geometry.PointCloud.create_from_rgbd_image(rgbd_image, intrinsic)
-
-# Flip the point cloud to correct orientation
-# pcd.transform([[1, 0, 0, 0],
-#                [0, -1, 0, 0],
-#                [0, 0, -1, 0],
-#                [0, 0, 0, 1]])
+pcd.points = o3d.utility.Vector3dVector(np.asarray(pcd.points) / 0.001)  # Convert to meters
+# # Flip the point cloud to correct orientation
+# # pcd.transform([[1, 0, 0, 0],
+# #                [0, -1, 0, 0],
+# #                [0, 0, -1, 0],
+# #                [0, 0, 0, 1]])
 
 vis = o3d.visualization.Visualizer()
 vis.create_window()
 vis.add_geometry(pcd)
 
+grasp_1 = best_grasp_cam[1]
+t_grasp = grasp_1[:3, 3]
+R_grasp = grasp_1[:3, :3]
+
+grasp_2 = best_grasp_cam[2]
+t_grasp_2 = grasp_2[:3, 3]
+R_grasp_2 = grasp_2[:3, :3]
+
+
+plot_coordinates(vis, t_grasp, R_grasp, central_color=(0.5, 0.5, 0.5))
+# plot_coordinates(vis, t_grasp_2, R_grasp_2, central_color=(0.5, 0.5, 0.5))
+
+
+print("point cloud", np.asarray(pcd.points))
 
 # plot_coordinates(vis, np.zeros(3,),np.eye(3,3), central_color=(0.5, 0.5, 0.5))
 
@@ -163,36 +173,7 @@ R = T_cam_world[:3, :3]
 
 plot_coordinates(vis, t, R)
 
-
-# Plot the frame of the best grasp of first object
-grasp = best_grasp_cam[1]
-grasp_in_world = T_cam_world @ grasp
-
-grasp_in_world *= 0.00025
-
-# grasp_in_world = T_cam_world @ grasp
-t_grasp = grasp_in_world[:3, 3]
-R_grasp = grasp_in_world[:3, :3]
-
-contact_sphere = o3d.geometry.TriangleMesh.create_sphere(radius=0.000005)
-contact_sphere.translate(best_contact_pts[1]*0.00025)
-contact_sphere.paint_uniform_color([1, 0, 0])  # Contact point color (e.g., red)
-
-# Add the gripper and contact point to the visualizer
-# vis.add_geometry(line_set)
-vis.add_geometry(contact_sphere)
-
-plot_coordinates(vis, t_grasp, R_grasp)
-
-
-
 vis.run()
 vis.destroy_window()
-
-
-# # Visualize the point cloud
-# o3d.visualization.draw_geometries([pcd])
-
-
 
 
