@@ -5,8 +5,8 @@ DATA:
     clip: 0.005
     gaussian_kernel: 0
     sigma: 0.001
-  # gripper_width: 0.08
   gripper_width: 0.08
+  # gripper_width: 0.1
   input_normals: false
   intrinsics: realsense
   labels:

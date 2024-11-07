@@ -11,6 +11,8 @@ from matplotlib import cm
 from scipy.spatial.transform import Rotation as R
 
 import contact_graspnet_pytorch.mesh_utils
+# from mayavi import mlab
+
 
 
 # To fix GLIB open3d error:

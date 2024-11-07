@@ -82,9 +82,32 @@ def inference(global_config,
         np.savez('results/predictions_{}'.format(os.path.basename(p.replace('png','npz').replace('npy','npz'))), 
                   pc_full=pc_full, pred_grasps_cam=pred_grasps_cam, scores=scores, contact_pts=contact_pts, pc_colors=pc_colors)
 
-        # Visualize results          
+        # Visualize results      
+
+        # best_score_idx = {}
+        # for key in scores:
+        #     if len(scores[key]) == 0:
+        #         best_score_idx[key] = None
+        #     else:
+        #         best_score_idx[key] = np.argmax(scores[key])
+
+        # best_scores = {}    
+        # for key in scores:
+        #     best_scores[key] = scores[key][best_score_idx[key]]
+
+        # best_grasp_cam = {}
+        # for key in pred_grasps_cam:
+        #     best_grasp_cam[key] = pred_grasps_cam[key][best_score_idx[key]]
+
+        # best_contact_pts = {}
+        # for key in contact_pts:
+        #     best_contact_pts[key] = contact_pts[key][best_score_idx[key]]
+
+
         show_image(rgb, segmap)
+        # visualize_grasps(pc_full, best_grasp_cam, best_scores, plot_opencv_cam=True, pc_colors=pc_colors)
         visualize_grasps(pc_full, pred_grasps_cam, scores, plot_opencv_cam=True, pc_colors=pc_colors)
+        return pred_grasps_cam, scores, contact_pts
         
     if not glob.glob(input_paths):
         print('No files found: ', input_paths)

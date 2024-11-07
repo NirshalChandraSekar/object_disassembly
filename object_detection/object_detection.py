@@ -126,7 +126,7 @@ class generate_dataset:
 
         # Write the YAML file
         with open("object_detection/data/dataset/dataset.yaml", "w") as f:
-            f.write(f"path: {base_path}\n")
+            f.write(f"path: dataset\n")
             f.write(f"train: {train_path}\n")
             f.write(f"val: {val_path}\n")
             f.write("names:\n")

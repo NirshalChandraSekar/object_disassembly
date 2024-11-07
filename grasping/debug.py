@@ -1,101 +1,198 @@
-from contact_graspnet_pytorch.inference import CGN
+# from contact_graspnet_pytorch.inference import CGN
 import numpy as np
 import cv2
 import open3d as o3d
 
-#
-np.set_printoptions(threshold=np.inf)
+def plot_coordinates(vis, t, r, tube_radius=0.005, central_color=None):
+    """
+    Plots coordinate frame
 
-# combined_mask = np.load("/home/niru/codes/disassembly/object_detection/data/combined_mask.npy")
-rgb_image = np.load("/home/niru/codes/disassembly/streaming_pipeline/data/color_image.npy")
-rgb_image = cv2.cvtColor(rgb_image, cv2.COLOR_BGR2RGB)
-depth_image = np.load("/home/niru/codes/disassembly/streaming_pipeline/data/depth_image.npy")
-k_matrix = np.load("/home/niru/codes/disassembly/streaming_pipeline/data/k_matrix.npy")
+    Arguments:
+        t {np.ndarray} -- translation vector
+        r {np.ndarray} -- rotation matrix
 
-points_data = np.load("/home/niru/codes/disassembly/streaming_pipeline/data/points_data.npy")
-print("Points Data Shape: ", points_data.shape)
+    Keyword Arguments:
+        tube_radius {float} -- radius of the plotted tubes (default: {0.005})
+    """
 
-depth_image = depth_image.astype(np.float32)  # Convert to float32
-depth_image *= 0.00025  # Multiply by 0.01
-# print("deptj_image", depth_image[240])
+    # Create a line for each axis of the coordinate frame
+    lines = []
+    colors = [(1, 0, 0), (0, 1, 0), (0, 0, 1)]  # Red, Green, Blue
+
+    if central_color is not None:
+        ball = o3d.geometry.TriangleMesh.create_sphere(radius=0.005)
+        ball.paint_uniform_color(np.array(central_color))
+        vis.add_geometry(ball)
+
+    for i in range(3):
+        line_points = [[t[0], t[1], t[2]],
+                       [t[0] + 0.2 * r[0, i], t[1] + 0.2 * r[1, i], t[2] + 0.2 * r[2, i]]]
+
+        line = o3d.geometry.LineSet()
+        line.points = o3d.utility.Vector3dVector(line_points)
+        line.lines = o3d.utility.Vector2iVector(np.array([[0, 1]]))
+        line.colors = o3d.utility.Vector3dVector(np.array([colors[i]]))
+
+        line.paint_uniform_color(colors[i])  # Set line color
+        lines.append(line)
+
+    # Visualize the lines in the Open3D visualizer
+    for line in lines:
+        vis.add_geometry(line)
+
+
+# def plot_single_grasp(vis, grasp_pose, contact_pt, gripper_width=0.08):
+#     """
+#     Plots a single best grasp pose in Open3D.
+    
+#     Arguments:
+#         vis {o3d.visualization.Visualizer} -- Open3D visualizer instance
+#         grasp_pose {np.ndarray} -- 4x4 grasp pose transformation
+#         contact_pt {np.ndarray} -- Contact point in the scene
+#         gripper_width {float} -- Width of the gripper for visual representation
+#     """
+#     # Define gripper control points in the local frame
+#     gripper_control_points = np.array([[0, 0, 0], [gripper_width / 2, 0, 0], 
+#                                        [-gripper_width / 2, 0, 0], [0, 0.1, 0], [0, -0.1, 0]])
+    
+#     # Transform control points using the grasp pose
+#     transformed_points = (gripper_control_points @ grasp_pose[:3, :3].T) + grasp_pose[:3, 3]
+    
+#     # Define lines connecting control points
+#     line_connections = [[0, 1], [0, 2], [1, 3], [2, 4]]
+    
+#     # Create Open3D LineSet for gripper visualization
+#     line_set = o3d.geometry.LineSet()
+#     line_set.points = o3d.utility.Vector3dVector(transformed_points)
+#     line_set.lines = o3d.utility.Vector2iVector(line_connections)
+#     line_set.paint_uniform_color([0, 1, 0])  # Gripper color (e.g., green)
+    
+#     # Visualize the contact point as a small sphere
+#     contact_sphere = o3d.geometry.TriangleMesh.create_sphere(radius=0.005)
+#     contact_sphere.translate(contact_pt)
+#     contact_sphere.paint_uniform_color([1, 0, 0])  # Contact point color (e.g., red)
+    
+#     # Add the gripper and contact point to the visualizer
+#     vis.add_geometry(line_set)
+#     vis.add_geometry(contact_sphere)
+
+
+# understand the outputs of contact graspnet
+
+pred_grasps_cam = np.load("data/pred_grasps_cam.npy", allow_pickle=True).item()
+scores = np.load("data/scores.npy", allow_pickle=True).item()
+contact_pts = np.load("data/contact_pts.npy", allow_pickle=True).item()
+
+color_image = np.load("../streaming_pipeline/data/color_image.npy", allow_pickle=True)
+
+depth_image = np.load("../streaming_pipeline/data/depth_image.npy", allow_pickle=True)
+k_matrix = np.load("../streaming_pipeline/data/k_matrix.npy", allow_pickle=True)
+
+
+
+# # print("pred grasps cam[0] length: ", len(pred_grasps_cam[2]))
+# # print(pred_grasps_cam)
+
+# print(contact_pts)
+# print("pred grasps cam length: ", len(contact_pts[2]))
+
+best_score_idx = {}
+for key in scores:
+    if len(scores[key]) == 0:
+        best_score_idx[key] = None
+    else:
+        best_score_idx[key] = np.argmax(scores[key])
+
+best_grasp_cam = {}
+for key in pred_grasps_cam:
+    best_grasp_cam[key] = pred_grasps_cam[key][best_score_idx[key]]
+
+best_contact_pts = {}
+for key in contact_pts:
+    best_contact_pts[key] = contact_pts[key][best_score_idx[key]]
 
 
 
 
-# depth_image = depth_image.astype(np.float64)
+''' PLOT THE POINT CLOUD USING THE COLOR IMAGE, DEPTH IMAGE AND THE CAMERA INTRINSICS '''
+color_image = cv2.cvtColor(color_image, cv2.COLOR_BGR2RGB)
+depth_image = depth_image.astype(np.float32)
+# depth_image /= 0.00025
+# Convert images to Open3D format
+color = o3d.geometry.Image(color_image)
+depth = o3d.geometry.Image(depth_image)
 
+# depth
 
+# Create Open3D RGBD image from color and depth images
 rgbd_image = o3d.geometry.RGBDImage.create_from_color_and_depth(
-    o3d.geometry.Image(rgb_image),
-    o3d.geometry.Image(depth_image),
-    convert_rgb_to_intensity=False
+    color, depth, convert_rgb_to_intensity=False
 )
 
-# Extract camera intrinsic parameters from the k_matrix
-fx = k_matrix[0, 0]  # focal length x
-fy = k_matrix[1, 1]  # focal length y
-cx = k_matrix[0, 2]  # principal point x
-cy = k_matrix[1, 2]  # principal point y
+# Create Open3D camera intrinsic object from K matrix
+height, width = depth_image.shape
+intrinsic = o3d.camera.PinholeCameraIntrinsic(width, height, k_matrix[0, 0], k_matrix[1, 1], k_matrix[0, 2], k_matrix[1, 2])
 
-# Create PinholeCameraIntrinsic object
-camera_intrinsics = o3d.camera.PinholeCameraIntrinsic(
-    width=rgb_image.shape[1],
-    height=rgb_image.shape[0],
-    fx=fx,
-    fy=fy,
-    cx=cx,
-    cy=cy
-)
+# Create point cloud from RGBD image and camera intrinsics
+pcd = o3d.geometry.PointCloud.create_from_rgbd_image(rgbd_image, intrinsic)
 
-# Generate the point cloud from the RGBD image
-pcd = o3d.geometry.PointCloud.create_from_rgbd_image(
-    rgbd_image,
-    camera_intrinsics
-)
+# Flip the point cloud to correct orientation
+# pcd.transform([[1, 0, 0, 0],
+#                [0, -1, 0, 0],
+#                [0, 0, -1, 0],
+#                [0, 0, 0, 1]])
 
-# Flip it to align correctly
-pcd.transform([[1, 0, 0, 0],
-               [0, -1, 0, 0],
-               [0, 0, -1, 0],
-               [0, 0, 0, 1]])
-
-# Visualize the point cloud
-o3d.visualization.draw_geometries([pcd])
+vis = o3d.visualization.Visualizer()
+vis.create_window()
+vis.add_geometry(pcd)
 
 
+# plot_coordinates(vis, np.zeros(3,),np.eye(3,3), central_color=(0.5, 0.5, 0.5))
+
+# Plot the camera coordinate frame
+T_world_cam = np.eye(4)
+T_cam_world = np.linalg.inv(T_world_cam)
+
+# T_cam_world = [[1, 0, 0, 0],
+#                [0, -1, 0, 0],
+#                [0, 0, -1, 0],
+#                [0, 0, 0, 1]] @ T_cam_world
+
+t = T_cam_world[:3, 3]
+R = T_cam_world[:3, :3]
+
+plot_coordinates(vis, t, R)
+
+
+# Plot the frame of the best grasp of first object
+grasp = best_grasp_cam[1]
+grasp_in_world = T_cam_world @ grasp
+
+grasp_in_world *= 0.00025
+
+# grasp_in_world = T_cam_world @ grasp
+t_grasp = grasp_in_world[:3, 3]
+R_grasp = grasp_in_world[:3, :3]
+
+contact_sphere = o3d.geometry.TriangleMesh.create_sphere(radius=0.000005)
+contact_sphere.translate(best_contact_pts[1]*0.00025)
+contact_sphere.paint_uniform_color([1, 0, 0])  # Contact point color (e.g., red)
+
+# Add the gripper and contact point to the visualizer
+# vis.add_geometry(line_set)
+vis.add_geometry(contact_sphere)
+
+plot_coordinates(vis, t_grasp, R_grasp)
+
+
+
+vis.run()
+vis.destroy_window()
+
+
+# # Visualize the point cloud
+# o3d.visualization.draw_geometries([pcd])
 
 
 
 
-
-
-# depth_image = depth_image.astype(np.float32)  # Convert to float32
-# depth_image *= 0.01  # Multiply by 0.01
-# # depth_image *= 0.1
-
-# # print("depth_image", depth_image)
-# print("Max of depth image: ", np.max(depth_image))
-# print("Min of depth image: ", np.min(depth_image))
-
-
-# input_for_cgn = {
-#                  'rgb': rgb_image,
-#                  'depth': depth_image,
-#                  'K': k_matrix,
-#                  'seg': combined_mask,
-# }
-# np.save("input_for_cgn.npy", input_for_cgn)
-
-
-
-# # cgn = CGN(input_path="results/input_for_cgn.npy", 
-# #           K=input_for_cgn['K'], z_range = [0.2,10],
-# #           local_regions = True,
-# #           filter_grasps = True,
-# #           skip_border_objects = True,
-# #           visualize=True, 
-# #           forward_passes=3)
-
-# cgn = CGN(input_path="input_for_cgn.npy", K=k_matrix, z_range = [10,50], visualize=True, forward_passes=2)
-
-# pred_grasps, grasp_scores, contact_pts, gripper_openings = cgn.inference()

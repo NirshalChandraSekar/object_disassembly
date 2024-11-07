@@ -9,3 +9,4 @@ yolo11n.pt
 yolo_pretrained_models/*
 test_images/*
 wandb/*
+__pycache__/*

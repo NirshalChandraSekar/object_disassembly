@@ -12,3 +12,4 @@ acronym/*
 
 *.egg-info
 
+data/*
