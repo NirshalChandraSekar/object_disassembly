@@ -119,10 +119,6 @@ if __name__ == "__main__":
                         K=k_matrix,
 
                         )
-    
-    print("pred_grasps cam length: ", len(pred_grasps_cam))
-    print("scores length: ", len(scores))
-    print("contact_pts length: ", len(contact_pts))
 
     np.save("grasping/data/pred_grasps_cam.npy", pred_grasps_cam)
     np.save("grasping/data/scores.npy", scores)

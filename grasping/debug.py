@@ -152,7 +152,7 @@ R_grasp_2 = grasp_2[:3, :3]
 
 
 plot_coordinates(vis, t_grasp, R_grasp, central_color=(0.5, 0.5, 0.5))
-# plot_coordinates(vis, t_grasp_2, R_grasp_2, central_color=(0.5, 0.5, 0.5))
+plot_coordinates(vis, t_grasp_2, R_grasp_2, central_color=(0.5, 0.5, 0.5))
 
 
 print("point cloud", np.asarray(pcd.points))
